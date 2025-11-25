@@ -137,22 +137,22 @@ class Recipe(models.Model):
         max_length=255,
         unique=True,
         db_index=True,
-        db_column='firebaseId'
+        db_column='firebase_id'
     )
     product_firebase_id = models.CharField(
         max_length=255,
         db_index=True,
-        db_column='productFirebaseId'
+        db_column='product_firebase_id'
     )
 
     # Product info
     product_name = models.CharField(
         max_length=255,
-        db_column='productName'
+        db_column='product_name'
     )
     product_number = models.IntegerField(
         default=0,
-        db_column='productId'  # May be 'productId' or 'productNumber' in Room
+        db_column='product_number'
     )
 
     # Timestamps
@@ -160,13 +160,13 @@ class Recipe(models.Model):
         auto_now_add=True,
         null=True,
         blank=True,
-        db_column='createdAt'
+        db_column='created_at'
     )
     updated_at = models.DateTimeField(
         auto_now=True,
         null=True,
         blank=True,
-        db_column='updatedAt'
+        db_column='updated_at'
     )
 
     def __str__(self):
@@ -188,32 +188,32 @@ class RecipeIngredient(models.Model):
         max_length=255,
         null=True,
         blank=True,
-        db_column='firebaseId'
+        db_column='firebase_id'
     )
     recipe_firebase_id = models.CharField(
         max_length=255,
         db_index=True,
-        db_column='recipeFirebaseId'
+        db_column='recipe_firebase_id'
     )
     ingredient_firebase_id = models.CharField(
         max_length=255,
         db_index=True,
-        db_column='ingredientFirebaseId'
+        db_column='ingredient_firebase_id'
     )
 
     # Ingredient details
     ingredient_name = models.CharField(
         max_length=255,
-        db_column='ingredientName'
+        db_column='ingredient_name'
     )
-    quantity_needed = models.FloatField(db_column='quantityNeeded')
+    quantity_needed = models.FloatField(db_column='quantity_needed')
     unit = models.CharField(max_length=50, default='g')
 
     # Recipe foreign key (if Room creates this)
     recipe_id = models.IntegerField(
         null=True,
         blank=True,
-        db_column='recipeId'
+        db_column='recipe_id'
     )
 
     # Timestamps
@@ -221,7 +221,7 @@ class RecipeIngredient(models.Model):
         auto_now_add=True,
         null=True,
         blank=True,
-        db_column='createdAt'
+        db_column='created_at'
     )
 
     def __str__(self):
