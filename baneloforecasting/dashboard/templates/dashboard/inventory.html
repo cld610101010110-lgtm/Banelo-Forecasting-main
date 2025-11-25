@@ -1721,8 +1721,12 @@
                         name: document.getElementById('productName').value,
                         price: parseFloat(document.getElementById('productPrice').value),
                         category: document.getElementById('productCategory').value,
-                        quantity: parseInt(document.getElementById('productStock').value),
-                        imageUri: imageUrl
+                        quantity: parseInt(document.getElementById('productStock').value) || 0,
+                        inventoryA: parseInt(document.getElementById('productStock').value) || 0,
+                        inventoryB: 0,
+                        costPerUnit: 0,
+                        imageUri: imageUrl,
+                        description: ''
                     };
 
                     if (!productData.name || !productData.category) {
@@ -1737,7 +1741,7 @@
                     let url;
                     if (currentEditId) {
                         url = '/dashboard/api/products/update/';
-                        productData.id = currentEditId;
+                        productData.productId = currentEditId;  // ✅ Fixed: was 'id', now 'productId'
                     } else {
                         url = '/dashboard/api/products/add/';
                     }
