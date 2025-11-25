@@ -1436,10 +1436,10 @@ def transfer_inventory_api(request):
 @login_required
 @require_http_methods(["POST"])
 def add_waste_api(request):
-    """Transfer items from Inventory B to Waste logs"""
+    """Transfer items from Inventory B to Waste logs via Node.js API"""
     try:
         data = json.loads(request.body)
-        print("\n🗑️ WASTE MANAGEMENT API CALLED (PostgreSQL)")
+        print("\n🗑️ WASTE MANAGEMENT API CALLED (via Node API)")
         print(f"Data received: {data}")
 
         product_id = data.get('productId')
@@ -1449,22 +1449,23 @@ def add_waste_api(request):
         if not product_id or waste_qty <= 0:
             return JsonResponse({'success': False, 'message': 'Invalid product or quantity'})
 
-        # Get product from PostgreSQL
-        # Try firebase_id first, then integer id if product_id is numeric
-        try:
-            product = Product.objects.get(firebase_id=product_id)
-        except Product.DoesNotExist:
-            # If not found by firebase_id, try integer id if it's numeric
-            try:
-                if str(product_id).isdigit():
-                    product = Product.objects.get(id=int(product_id))
-                else:
-                    return JsonResponse({'success': False, 'message': 'Product not found'})
-            except (Product.DoesNotExist, ValueError, AttributeError):
-                return JsonResponse({'success': False, 'message': 'Product not found'})
+        # Get API service
+        api = get_api_service()
 
-        product_name = product.name
-        inventory_b = float(product.inventory_b or 0)
+        # Get product details to validate and get product name/category
+        products = api.get_products()
+        product = None
+        for p in products:
+            if p.get('id') == product_id or p.get('firebase_id') == product_id:
+                product = p
+                break
+
+        if not product:
+            return JsonResponse({'success': False, 'message': 'Product not found'})
+
+        product_name = product.get('name', 'Unknown Product')
+        category = product.get('category', 'Unknown')
+        inventory_b = float(product.get('inventory_b', 0))
 
         # Check if sufficient stock
         if inventory_b < waste_qty:
@@ -1473,36 +1474,42 @@ def add_waste_api(request):
                 'message': f'Insufficient stock in Inventory B. Available: {inventory_b:.2f}'
             })
 
-        # Deduct from Inventory B
-        new_inventory_b = inventory_b - waste_qty
+        print(f"📤 Recording waste: {waste_qty} units of {product_name}")
 
-        # Update product
-        product.inventory_b = new_inventory_b
-        product.quantity = new_inventory_b
-        product.save()
+        # Prepare waste data for Node API (matching Node API expectations)
+        waste_data = {
+            'productFirebaseId': product.get('firebase_id', product_id),
+            'productName': product_name,
+            'category': category,
+            'quantity': waste_qty,
+            'reason': reason,
+            'recordedBy': request.user.username
+        }
 
-        # Create waste log entry
-        WasteLog.objects.create(
-            product_firebase_id=product.firebase_id or str(product.id),
-            product_name=product_name,
-            quantity=waste_qty,
-            reason=reason,
-            waste_date=datetime.now(),
-            recorded_by=request.user.username,
-            category=product.category
-        )
+        # Call Node API to record waste
+        result = api.add_waste_log(waste_data)
 
-        print(f"✅ Recorded waste: {waste_qty} units of {product_name}")
-        print(f"   Inventory B: {inventory_b} → {new_inventory_b}")
-        print(f"   Reason: {reason}")
+        if result.get('success'):
+            new_inventory_b = inventory_b - waste_qty
 
-        log_audit('Waste Recorded', request.user, f'Recorded {waste_qty} units of {product_name} as waste ({reason})')
+            print(f"✅ Recorded waste: {waste_qty} units of {product_name}")
+            print(f"   Inventory B: {inventory_b} → {new_inventory_b}")
+            print(f"   Reason: {reason}")
 
-        return JsonResponse({
-            'success': True,
-            'message': f'Successfully recorded {waste_qty} units of {product_name} as waste',
-            'newInventoryB': new_inventory_b
-        })
+            log_audit('Waste Recorded', request.user, f'Recorded {waste_qty} units of {product_name} as waste ({reason})')
+
+            return JsonResponse({
+                'success': True,
+                'message': f'Successfully recorded {waste_qty} units of {product_name} as waste',
+                'newInventoryB': new_inventory_b
+            })
+        else:
+            error_message = result.get('message', 'Failed to record waste')
+            print(f"❌ Node API returned error: {error_message}")
+            return JsonResponse({
+                'success': False,
+                'message': error_message
+            })
 
     except Exception as e:
         print(f"❌ Error in waste management: {e}")
