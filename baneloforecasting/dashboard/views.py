@@ -1916,31 +1916,45 @@ def train_forecasting_model(request):
 @login_required
 @require_http_methods(["POST"])
 def add_product_view(request):
-    """Add a new product"""
+    """Add a new product via Node.js API"""
     try:
         data = json.loads(request.body)
-        print("\n🔥 ADD PRODUCT API CALLED (PostgreSQL)")
+        print("\n🔥 ADD PRODUCT API CALLED (via Node API)")
 
-        import uuid
-        product = Product.objects.create(
-            firebase_id=str(uuid.uuid4()),
-            name=data.get('name'),
-            category=data.get('category'),
-            price=float(data.get('price', 0)),
-            quantity=float(data.get('quantity', 0)),
-            unit=data.get('unit', 'pcs'),
-            inventory_a=float(data.get('inventoryA', data.get('quantity', 0))),
-            inventory_b=0,
-            cost_per_unit=float(data.get('costPerUnit', 0))
-        )
+        # Get API service
+        api = get_api_service()
 
-        log_audit('Product Added', request.user, f'Added product: {product.name}')
+        # Prepare product data for Node API
+        product_data = {
+            'name': data.get('name'),
+            'category': data.get('category'),
+            'price': float(data.get('price', 0)),
+            'quantity': float(data.get('quantity', 0)),
+            'inventory_a': float(data.get('inventoryA', data.get('quantity', 0))),
+            'inventory_b': 0,
+            'cost_per_unit': float(data.get('costPerUnit', 0)),
+            'image_uri': data.get('imageUri', ''),
+            'description': data.get('description', ''),
+            'sku': data.get('sku', '')
+        }
 
-        return JsonResponse({
-            'success': True,
-            'message': f'Product {product.name} added successfully!',
-            'productId': product.firebase_id
-        })
+        # Call Node API to add product
+        result = api.add_product(product_data)
+
+        if result.get('success'):
+            product_name = data.get('name', 'Product')
+            log_audit('Product Added', request.user, f'Added product: {product_name}')
+
+            return JsonResponse({
+                'success': True,
+                'message': f'Product {product_name} added successfully!',
+                'productId': result.get('data', {}).get('firebase_id', '')
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': result.get('message', 'Failed to add product')
+            })
 
     except Exception as e:
         print(f"❌ Error adding product: {e}")
@@ -1950,44 +1964,46 @@ def add_product_view(request):
 @login_required
 @require_http_methods(["POST"])
 def update_product_view(request):
-    """Update an existing product"""
+    """Update an existing product via Node.js API"""
     try:
         data = json.loads(request.body)
-        print("\n🔥 UPDATE PRODUCT API CALLED (PostgreSQL)")
+        print("\n🔥 UPDATE PRODUCT API CALLED (via Node API)")
 
         product_id = data.get('productId')
 
-        try:
-            product = Product.objects.get(Q(firebase_id=product_id) | Q(id=product_id))
-        except Product.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Product not found'})
+        # Get API service
+        api = get_api_service()
 
-        # Update fields
-        if 'name' in data:
-            product.name = data['name']
-        if 'category' in data:
-            product.category = data['category']
-        if 'price' in data:
-            product.price = float(data['price'])
-        if 'quantity' in data:
-            product.quantity = float(data['quantity'])
-        if 'unit' in data:
-            product.unit = data['unit']
-        if 'inventoryA' in data:
-            product.inventory_a = float(data['inventoryA'])
-        if 'inventoryB' in data:
-            product.inventory_b = float(data['inventoryB'])
-        if 'costPerUnit' in data:
-            product.cost_per_unit = float(data['costPerUnit'])
+        # Prepare update data for Node API
+        update_data = {
+            'firebaseId': product_id,
+            'name': data.get('name'),
+            'category': data.get('category'),
+            'price': float(data.get('price', 0)),
+            'quantity': float(data.get('quantity', 0)),
+            'inventory_a': float(data.get('inventoryA', 0)),
+            'inventory_b': float(data.get('inventoryB', 0)),
+            'cost_per_unit': float(data.get('costPerUnit', 0)),
+            'image_uri': data.get('imageUri', ''),
+            'description': data.get('description', '')
+        }
 
-        product.save()
+        # Call Node API to update product
+        result = api.update_product(product_id, update_data)
 
-        log_audit('Product Updated', request.user, f'Updated product: {product.name}')
+        if result.get('success'):
+            product_name = data.get('name', 'Product')
+            log_audit('Product Updated', request.user, f'Updated product: {product_name}')
 
-        return JsonResponse({
-            'success': True,
-            'message': f'Product {product.name} updated successfully!'
-        })
+            return JsonResponse({
+                'success': True,
+                'message': f'Product {product_name} updated successfully!'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': result.get('message', 'Failed to update product')
+            })
 
     except Exception as e:
         print(f"❌ Error updating product: {e}")
