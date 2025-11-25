@@ -1133,13 +1133,7 @@
                         <!-- Edit & Delete Buttons -->
                         <div style="position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 10px; z-index: 10;">
                             <!-- Edit Button -->
-                            <button class="btn-edit-product"
-                                    data-id="{{ product.id }}"
-                                    data-name="{{ product.name }}"
-                                    data-price="{{ product.price }}"
-                                    data-category="{{ product.category }}"
-                                    data-stock="{{ product.stock }}"
-                                    data-image="{{ product.image }}"
+                            <button onclick="editProduct('{{ product.id }}', '{{ product.name }}', {{ product.price }}, '{{ product.category }}', {{ product.stock }}, '{{ product.image }}')"
                                     title="Edit Product"
                                     style="background: #4CAF50;
                            width: 40px;
@@ -1159,9 +1153,7 @@
                             </button>
 
                             <!-- Delete Button -->
-                            <button class="btn-delete-product"
-                                    data-id="{{ product.id }}"
-                                    data-name="{{ product.name }}"
+                            <button onclick="deleteProduct('{{ product.id }}', '{{ product.name }}')"
                                     title="Delete Product"
                                     style="background: #F44336;
                            width: 40px;
@@ -1827,31 +1819,6 @@
 
                     console.log('✅ Default "All" filter applied');
                 }
-
-                // ============================================
-                // ATTACH EVENT LISTENERS TO EDIT/DELETE BUTTONS
-                // ============================================
-                // Edit product buttons
-                document.querySelectorAll('.btn-edit-product').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const id = this.dataset.id;
-                        const name = this.dataset.name;
-                        const price = parseFloat(this.dataset.price);
-                        const category = this.dataset.category;
-                        const stock = parseFloat(this.dataset.stock);
-                        const image = this.dataset.image;
-                        editProduct(id, name, price, category, stock, image);
-                    });
-                });
-
-                // Delete product buttons
-                document.querySelectorAll('.btn-delete-product').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const id = this.dataset.id;
-                        const name = this.dataset.name;
-                        deleteProduct(id, name);
-                    });
-                });
             });
 
             // ========================================

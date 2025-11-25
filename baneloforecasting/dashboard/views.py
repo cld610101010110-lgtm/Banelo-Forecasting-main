@@ -1160,7 +1160,6 @@ def recipes_view(request):
             'recipes': recipes_list,
             'beverages': beverages,
             'ingredients': available_ingredients,
-            'ingredients_json': available_ingredients,  # For json_script filter
         }
         return render(request, 'dashboard/recipes.html', context)
 
@@ -1173,7 +1172,6 @@ def recipes_view(request):
             'recipes': [],
             'beverages': [],
             'ingredients': [],
-            'ingredients_json': [],
         }
         return render(request, 'dashboard/recipes.html', context)
 

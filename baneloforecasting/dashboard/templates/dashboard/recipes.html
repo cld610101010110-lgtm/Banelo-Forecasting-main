@@ -787,11 +787,9 @@
     </div>
 </div>
 
-{{ ingredients_json|json_script:"ingredients-data" }}
 <script>
-// Available ingredients from Django context (properly JSON-serialized)
-const ingredientsDataEl = document.getElementById('ingredients-data');
-const availableIngredients = ingredientsDataEl ? JSON.parse(ingredientsDataEl.textContent) : [];
+// Available ingredients from Django context
+const availableIngredients = {{ ingredients|safe }};
 
 let currentEditId = null;
 let ingredientCounter = 0;
