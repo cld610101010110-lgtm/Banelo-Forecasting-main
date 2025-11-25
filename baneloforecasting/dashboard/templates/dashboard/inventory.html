@@ -1287,6 +1287,13 @@
 
                 messageEl.textContent = message;
                 overlay.classList.add('active');
+
+                // Auto-close success notifications after 1.5 seconds to trigger page reload
+                if (type === 'success') {
+                    setTimeout(() => {
+                        closeNotification();
+                    }, 1500);
+                }
             }
 
             function closeNotification() {
