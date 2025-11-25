@@ -16,9 +16,13 @@ from django.contrib.auth import update_session_auth_hash
 from django.conf import settings
 from datetime import datetime, timedelta
 from collections import defaultdict
+from django.db.models import Q
 
 # Import API service
 from .api_service import get_api_service
+
+# Import models
+from .models import Product, Recipe, RecipeIngredient, Sale, WasteLog, AuditTrail
 
 
 # ============================================
