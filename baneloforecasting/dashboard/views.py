@@ -16,9 +16,13 @@ from django.contrib.auth import update_session_auth_hash
 from django.conf import settings
 from datetime import datetime, timedelta
 from collections import defaultdict
+from django.db.models import Q
 
 # Import API service
 from .api_service import get_api_service
+
+# Import models
+from .models import Product, Recipe, RecipeIngredient, Sale, WasteLog, AuditTrail
 
 
 # ============================================
@@ -1446,10 +1450,18 @@ def add_waste_api(request):
             return JsonResponse({'success': False, 'message': 'Invalid product or quantity'})
 
         # Get product from PostgreSQL
+        # Try firebase_id first, then integer id if product_id is numeric
         try:
-            product = Product.objects.get(Q(firebase_id=product_id) | Q(id=product_id))
+            product = Product.objects.get(firebase_id=product_id)
         except Product.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Product not found'})
+            # If not found by firebase_id, try integer id if it's numeric
+            try:
+                if str(product_id).isdigit():
+                    product = Product.objects.get(id=int(product_id))
+                else:
+                    return JsonResponse({'success': False, 'message': 'Product not found'})
+            except (Product.DoesNotExist, ValueError, AttributeError):
+                return JsonResponse({'success': False, 'message': 'Product not found'})
 
         product_name = product.name
         inventory_b = float(product.inventory_b or 0)

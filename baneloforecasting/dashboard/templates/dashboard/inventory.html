@@ -1287,6 +1287,13 @@
 
                 messageEl.textContent = message;
                 overlay.classList.add('active');
+
+                // Auto-close success notifications after 1.5 seconds to trigger page reload
+                if (type === 'success') {
+                    setTimeout(() => {
+                        closeNotification();
+                    }, 1500);
+                }
             }
 
             function closeNotification() {
@@ -1842,52 +1849,66 @@
                 document.getElementById('transferModal').classList.remove('active');
             }
 
-            document.getElementById('transferForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
+            // Initialize transfer form listener after DOM is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                const transferForm = document.getElementById('transferForm');
+                if (transferForm) {
+                    transferForm.addEventListener('submit', async function(e) {
+                        e.preventDefault();
 
-                const submitBtn = e.target.querySelector('.btn-submit');
-                const originalText = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Transferring...';
-                submitBtn.disabled = true;
+                        const submitBtn = e.target.querySelector('.btn-submit');
+                        if (!submitBtn) {
+                            console.error('Submit button not found');
+                            return;
+                        }
 
-                try {
-                    const productId = document.getElementById('transferProductId').value;
-                    const quantity = parseFloat(document.getElementById('transferQuantity').value);
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Transferring...';
+                        submitBtn.disabled = true;
 
-                    const response = await fetch('/dashboard/api/inventory/transfer/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCookie('csrftoken')
-                        },
-                        body: JSON.stringify({
-                            productId: productId,
-                            quantity: quantity
-                        })
+                        try {
+                            const productId = document.getElementById('transferProductId').value;
+                            const quantity = parseFloat(document.getElementById('transferQuantity').value);
+
+                            const response = await fetch('/dashboard/api/inventory/transfer/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCookie('csrftoken')
+                                },
+                                body: JSON.stringify({
+                                    productId: productId,
+                                    quantity: quantity
+                                })
+                            });
+
+                            const result = await response.json();
+
+                            if (result.success) {
+                                closeTransferModal();
+                                showNotification(result.message, 'success');
+                            } else {
+                                showNotification(result.message, 'error');
+                                submitBtn.innerHTML = originalText;
+                                submitBtn.disabled = false;
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            showNotification('Failed to transfer inventory. Please try again.', 'error');
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.disabled = false;
+                        }
                     });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        closeTransferModal();
-                        showNotification(result.message, 'success');
-                    } else {
-                        showNotification(result.message, 'error');
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    showNotification('Failed to transfer inventory. Please try again.', 'error');
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
                 }
-            });
 
-            // Close transfer modal when clicking outside
-            document.getElementById('transferModal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeTransferModal();
+                // Close transfer modal when clicking outside
+                const transferModal = document.getElementById('transferModal');
+                if (transferModal) {
+                    transferModal.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            closeTransferModal();
+                        }
+                    });
                 }
             });
 
@@ -1908,54 +1929,68 @@
                 document.getElementById('wasteModal').classList.remove('active');
             }
 
-            document.getElementById('wasteForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
+            // Initialize waste form listener after DOM is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                const wasteForm = document.getElementById('wasteForm');
+                if (wasteForm) {
+                    wasteForm.addEventListener('submit', async function(e) {
+                        e.preventDefault();
 
-                const submitBtn = e.target.querySelector('.btn-submit');
-                const originalText = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recording Waste...';
-                submitBtn.disabled = true;
+                        const submitBtn = e.target.querySelector('.btn-submit');
+                        if (!submitBtn) {
+                            console.error('Submit button not found');
+                            return;
+                        }
 
-                try {
-                    const productId = document.getElementById('wasteProductId').value;
-                    const quantity = parseFloat(document.getElementById('wasteQuantity').value);
-                    const reason = document.getElementById('wasteReason').value;
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recording Waste...';
+                        submitBtn.disabled = true;
 
-                    const response = await fetch('/dashboard/api/waste/add/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCookie('csrftoken')
-                        },
-                        body: JSON.stringify({
-                            productId: productId,
-                            quantity: quantity,
-                            reason: reason
-                        })
+                        try {
+                            const productId = document.getElementById('wasteProductId').value;
+                            const quantity = parseFloat(document.getElementById('wasteQuantity').value);
+                            const reason = document.getElementById('wasteReason').value;
+
+                            const response = await fetch('/dashboard/api/waste/add/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCookie('csrftoken')
+                                },
+                                body: JSON.stringify({
+                                    productId: productId,
+                                    quantity: quantity,
+                                    reason: reason
+                                })
+                            });
+
+                            const result = await response.json();
+
+                            if (result.success) {
+                                closeWasteModal();
+                                showNotification(result.message, 'success');
+                            } else {
+                                showNotification(result.message, 'error');
+                                submitBtn.innerHTML = originalText;
+                                submitBtn.disabled = false;
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            showNotification('Failed to record waste. Please try again.', 'error');
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.disabled = false;
+                        }
                     });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        closeWasteModal();
-                        showNotification(result.message, 'success');
-                    } else {
-                        showNotification(result.message, 'error');
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    showNotification('Failed to record waste. Please try again.', 'error');
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
                 }
-            });
 
-            // Close waste modal when clicking outside
-            document.getElementById('wasteModal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeWasteModal();
+                // Close waste modal when clicking outside
+                const wasteModal = document.getElementById('wasteModal');
+                if (wasteModal) {
+                    wasteModal.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            closeWasteModal();
+                        }
+                    });
                 }
             });
 
