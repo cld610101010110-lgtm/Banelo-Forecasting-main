@@ -205,7 +205,7 @@ class APIService:
 
     def add_waste_log(self, waste_data):
         """Add a new waste log entry"""
-        return self._make_request('POST', '/api/waste-logs', data=waste_data)
+        return self._make_request('POST', '/api/waste', data=waste_data)
 
     # ========================================
     # INVENTORY ENDPOINTS
@@ -213,8 +213,8 @@ class APIService:
 
     def transfer_inventory(self, product_id, quantity):
         """Transfer stock from Inventory A to B"""
-        return self._make_request('POST', '/api/inventory/transfer', data={
-            'product_id': product_id,
+        return self._make_request('POST', '/api/products/transfer', data={
+            'firebaseId': product_id,
             'quantity': quantity
         })
 
